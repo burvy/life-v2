@@ -68,16 +68,13 @@ impl ApplicationHandler for App {
             return;
         };
         match event {
-            WindowEvent::Resized(new_size) => {
-                // prevent resizing errors from being actually considered as events
+            WindowEvent::Resized(size) => {
                 if let Some(pixels) = self.pixels.as_mut() {
-                    if let Err(err) = pixels.resize_surface(new_size.width, new_size.height) {
-                        println!("pixels.resize_surface error: {err}");
-                        event_loop.exit();
-                    }
+                    pixels.resize_surface(size.width, size.height).expect("couldn't resize surface");
                 }
-                // redraw now that things probably match now
-                window.request_redraw();
+                if let Some(window) = self.window.as_ref() {
+                    window.request_redraw();
+                }
             }
             WindowEvent::CloseRequested => {
                 event_loop.exit();
