@@ -26,8 +26,8 @@ pub struct App {
     /// put ur pixels here
     /// also compiler rlly wants this to have a lifetime so wtv
     pub pixels: Option<Pixels<'static>>,
-    /// RGBA
-    pub bg_clr: [f64; 4],
+    /// RGB without the alpha to see if it doesnt crash
+    pub bg_clr: [f64; 3],
 }
 
 impl ApplicationHandler for App {
@@ -36,7 +36,7 @@ impl ApplicationHandler for App {
         if self.window.is_none() {
             let window_attributes = Window::default_attributes()
                 .with_title("Cellular Automata") // this is probably how its spelled
-                .with_transparent(true) // why not
+                // no transparency bc it might crash
                 .with_inner_size(LogicalSize::new(800, 600)); // do some more method shopping if u want
             // window is an arc which makes things so much better
             let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
@@ -63,32 +63,43 @@ impl ApplicationHandler for App {
     ) {
         dbg!("{} happened to window {}", &event, &window_id); // can we do something with window_id
         let window = self.window.as_ref().expect("ur window doesnt exist");
+        let Some(pixels) = self.pixels.as_mut() else {
+            dbg!("self pixels could not be did as mut");
+            return;
+        };
         match event {
+            WindowEvent::Resized(new_size) => {
+                // prevent resizing errors from being actually considered as events
+                if let Some(pixels) = self.pixels.as_mut() {
+                    if let Err(err) = pixels.resize_surface(new_size.width, new_size.height) {
+                        println!("pixels.resize_surface error: {err}");
+                        event_loop.exit();
+                    }
+                }
+                // redraw now that things probably match now
+                window.request_redraw();
+            }
             WindowEvent::CloseRequested => {
                 event_loop.exit();
             }
             WindowEvent::CursorEntered { .. } => {
-                self.bg_clr = [norm(206), norm(66), norm(43), norm(255)]; // this is ferris rust orange btw
+                self.bg_clr = [norm(206), norm(66), norm(43)]; // this is ferris rust orange btw
                 window.request_redraw();
             }
             WindowEvent::CursorLeft { .. } => {
-                self.bg_clr = [norm(43), norm(66), norm(206), norm(255)]; // this would be the OPPOSITE of ferris orange
+                self.bg_clr = [norm(43), norm(66), norm(206)]; // this would be the OPPOSITE of ferris orange
                 window.request_redraw();
             }
             WindowEvent::RedrawRequested => {
-                if let Some(pixels) = self.pixels.as_mut() {
-                    let [r, g, b, a] = self.bg_clr;
+                    let [r, g, b,] = self.bg_clr;
 
-                    pixels.clear_color(Color { r, g, b, a });
+                    pixels.clear_color(Color { r, g, b, a: 1.0 });
 
                     if let Err(err) = pixels.render() {
                         println!("couldnt render pixels bc of error: {err}");
                         event_loop.exit();
                     }
-                } else {
-                    dbg!("pixels didnt work");
                 }
-            }
             _ => (),
         }
     }
