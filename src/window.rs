@@ -1,4 +1,6 @@
-use pixels::{wgpu::web_sys::wasm_bindgen::UnwrapThrowExt, Pixels, SurfaceTexture};
+use std::sync::Arc;
+
+use pixels::{Pixels, SurfaceTexture, wgpu::Color};
 use pollster;
 use winit::{
     application::ApplicationHandler,
@@ -7,6 +9,7 @@ use winit::{
     event_loop::ActiveEventLoop,
     window::{Window, WindowId},
 };
+
 
 /// now all of T S boiler plate has to be written
 /// bc winit decided it must be so
@@ -19,12 +22,12 @@ pub struct App {
     /// just make this the default
     /// window is window
     /// WINDOW SSISS NIDOASDNA OSIDNALSD
-    pub window: Option<Window>, // whyyy does this need to be public
+    pub window: Option<Arc<Window>>, // whyyy does this need to be public
     /// put ur pixels here
     /// also compiler rlly wants this to have a lifetime so wtv
     pub pixels: Option<Pixels<'static>>,
     /// RGBA
-    pub bg_clr: [u8; 4],
+    pub bg_clr: [f64; 4],
 }
 
 impl ApplicationHandler for App {
@@ -35,14 +38,10 @@ impl ApplicationHandler for App {
                 .with_title("Cellular Automata") // this is probably how its spelled
                 .with_transparent(true) // why not
                 .with_inner_size(LogicalSize::new(800, 600)); // do some more method shopping if u want
-            // clarification that one is window and the other is a reference to a window (the one in the App)
-            let window: Window = event_loop
-                .create_window(window_attributes)
-                .unwrap();
-            // we have to store window in self.window first
-            self.window = Some(window);
-            // then use self.window so the next usages of window dont come with borrow checker errors
-            let window: &Window = self.window.as_ref().expect("ur window doesnt exist");
+            // window is an arc which makes things so much better
+            let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
+            self.window = Some(window.clone());
+            // so we can solve borrow checker issues by just cloning window earlier
             let size = window.inner_size();
             let surface_texture = SurfaceTexture::new(size.width, size.height, window);
             // the alternative to not using pollster is horrific so we should use it
@@ -64,24 +63,38 @@ impl ApplicationHandler for App {
     ) {
         dbg!("{} happened to window {}", &event, &window_id); // can we do something with window_id
         let window = self.window.as_ref().expect("ur window doesnt exist");
-        let Some(pixels) = self.pixels.as_mut() else {
-            dbg!("pixels dont exist");
-            return;
-        };
         match event {
             WindowEvent::CloseRequested => {
                 event_loop.exit();
             }
             WindowEvent::CursorEntered { .. } => {
-                self.bg_clr = [206, 66, 43, 255]; // this is ferris rust orange btw
+                self.bg_clr = [norm(206), norm(66), norm(43), norm(255)]; // this is ferris rust orange btw
                 window.request_redraw();
             }
             WindowEvent::CursorLeft { .. } => {
-                self.bg_clr = [43, 66, 206, 255]; // this would be the OPPOSITE of ferris orange
+                self.bg_clr = [norm(43), norm(66), norm(206), norm(255)]; // this would be the OPPOSITE of ferris orange
                 window.request_redraw();
             }
-            WindowEvent::RedrawRequested => {}
+            WindowEvent::RedrawRequested => {
+                if let Some(pixels) = self.pixels.as_mut() {
+                    let [r, g, b, a] = self.bg_clr;
+
+                    pixels.clear_color(Color { r, g, b, a });
+
+                    if let Err(err) = pixels.render() {
+                        println!("couldnt render pixels bc of error: {err}");
+                        event_loop.exit();
+                    }
+                } else {
+                    dbg!("pixels didnt work");
+                }
+            }
             _ => (),
         }
     }
+}
+
+/// normalizes an u8 to f64 (color from 0-255 to 0.0-1.0)
+pub fn norm(num: u8) -> f64 {
+    num as f64 / 255.0
 }
