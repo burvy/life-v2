@@ -1,6 +1,9 @@
 use std::sync::Arc;
 
-use pixels::{Pixels, SurfaceTexture, wgpu::Color};
+use pixels::{
+    Pixels, PixelsBuilder, SurfaceTexture,
+    wgpu::{Backends, Color},
+};
 use pollster;
 use winit::{
     application::ApplicationHandler,
@@ -53,7 +56,17 @@ impl ApplicationHandler for App {
             let pixels = pollster::block_on(
                 async {
                     // if u dont know what await is we just poll this until its done
-                    Pixels::new_async(size.width, size.height, surface_texture).await
+                    PixelsBuilder::new(size.width, size.height, surface_texture)
+                        // dont use Backends::all() (the default)
+                        // dx12 has no adapters on
+                        // my machine but still puts a DXGI surface on the window, which
+                        // gets the vulkan device lost during Surface::configure and wgpu
+                        // swallows device-lost errors
+                        // so the surface silently stays
+                        // unconfigured and the first render() panics
+                        .wgpu_backend(Backends::VULKAN | Backends::GL)
+                        .build_async()
+                        .await
                 }
             ).expect("couldn't create pixels");
             self.graphics = Some(Graphics { window, pixels, bg_clr: [0.0, 0.0, 0.0] });
@@ -72,10 +85,14 @@ impl ApplicationHandler for App {
         if let WindowEvent::Resized(size) = &event {
             if size.width > 0 && size.height > 0 {
                 if let Some(graphics) = self.graphics.as_mut() {
-                    let surface = SurfaceTexture::new(size.width, size.height, graphics.window.clone());
-                    graphics.pixels = pollster::block_on(
-                        Pixels::new_async(size.width, size.height, surface)
-                    ).expect("couldn't recreate pixels on resize");
+                    // dont rebuild Pixels here it creates a second surface on the same
+                    // window while the old one still owns it which is an Invalid surface
+                    // error on vulkan
+                    // resizing the existing one reconfigures in place
+                    graphics.pixels.resize_surface(size.width, size.height)
+                        .expect("couldn't resize surface");
+                    graphics.pixels.resize_buffer(size.width, size.height)
+                        .expect("couldn't resize buffer");
                     graphics.window.request_redraw();
                 }
             }
