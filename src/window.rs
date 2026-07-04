@@ -15,6 +15,12 @@ use winit::{
 
 use super::logic;
 
+pub struct PixelInfo {
+    pub x: usize,
+    pub y: usize,
+    pub color: [u8; 4],
+}
+
 pub struct Graphics {
     /// just make this the default
     /// window is window
@@ -30,7 +36,6 @@ pub struct Graphics {
     /// RGB without the alpha to see if it doesnt crash
     pub bg_clr: [f64; 3],
 }
-
 
 /// now all of T S boiler plate has to be written
 /// bc winit decided it must be so
@@ -188,11 +193,6 @@ impl Graphics {
                 .copy_from_slice(&pixel.color.repeat(self.scale));
         });
     }
-}
-pub struct PixelInfo {
-    pub x: usize,
-    pub y: usize,
-    pub color: [u8; 4],
 }
 
 /// normalizes an u8 to f64 (color from 0-255 to 0.0-1.0)
