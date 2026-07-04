@@ -141,28 +141,30 @@ impl ApplicationHandler for App {
 }
 
 impl Graphics {
-    /// draws a single pixel into the frame buffer [r, g, b, a] which is why you see 4 a lot
-    /// every pixel is 4 bytes
-    /// has a safety check for if the pixel is out of bounds
-    /// x and y start from the top left corner
-    /// pixels drawn here stay forever
-    /// make sure you remember to clear them
-    pub fn draw_pixel(&mut self, x: u32, y: u32, color: [u8; 4]) {
-        let size = self.pixels.texture().size();
-        // you know what this is
-        if x >= size.width || y >= size.height {
-            eprintln!("pixel x={}, y={} is not in the window", x, y);
-            return;
-        }
-        // this calculates the correct index because the frame buffer is a list
-        // one pixel happens every 4 bytes, and those 4 bytes are r, g, b, a
-        // it really sucks how theres no built in draw function/method
-        // we can kind of simulate x and y, just note that it starts from the top left corner
-        // the pixel buffer is kind of memory efficient i guess but weird
-        let i = ((y * size.width + x) << 2) as usize; // bitshifting hehe
-        // replaces the 4 elements that represent the color of the pixel with the input color
-        self.pixels.frame_mut()[i..i + 4].copy_from_slice(&color);
-    }
+    // this method is worse than drawing pixels on the grid
+    // unless you want to draw individual pixels for whatever reason
+    // /// draws a single pixel into the frame buffer [r, g, b, a] which is why you see 4 a lot
+    // /// every pixel is 4 bytes
+    // /// has a safety check for if the pixel is out of bounds
+    // /// x and y start from the top left corner
+    // /// pixels drawn here stay forever
+    // /// make sure you remember to clear them
+    // pub fn draw_pixel(&mut self, x: u32, y: u32, color: [u8; 4]) {
+    //     let size = self.pixels.texture().size();
+    //     // you know what this is
+    //     if x >= size.width || y >= size.height {
+    //         eprintln!("pixel x={}, y={} is not in the window", x, y);
+    //         return;
+    //     }
+    //     // this calculates the correct index because the frame buffer is a list
+    //     // one pixel happens every 4 bytes, and those 4 bytes are r, g, b, a
+    //     // it really sucks how theres no built in draw function/method
+    //     // we can kind of simulate x and y, just note that it starts from the top left corner
+    //     // the pixel buffer is kind of memory efficient i guess but weird
+    //     let i = ((y * size.width + x) << 2) as usize; // bitshifting hehe
+    //     // replaces the 4 elements that represent the color of the pixel with the input color
+    //     self.pixels.frame_mut()[i..i + 4].copy_from_slice(&color);
+    // }
 
     pub fn draw_pixel_on_grid(&mut self, pixel: PixelInfo) {
         let (x, y, pixel_scale, color) = (pixel.x, pixel.y, pixel.scale, pixel.color);
