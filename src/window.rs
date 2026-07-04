@@ -190,11 +190,6 @@ impl Graphics {
     /// and the size provided in the `Graphics` definition
     pub fn draw_pixel_on_grid(&mut self, pixel: PixelInfo) {
         let size = self.pixels.texture().size();
-        let (x_end, y_end) = (pixel.x * self.scale, pixel.y * self.scale);
-        if x_end >= size.width as usize || y_end >= size.height as usize {
-            eprintln!("pixel x={}, y={} is not in the window", x_end, y_end);
-            return;
-        }
         // i could be 0? what happens if you bitshift on 0
         let i = ((pixel.y * size.width as usize + pixel.x) * 4) as usize;
         let row_len = (size.width << 2) as usize;
