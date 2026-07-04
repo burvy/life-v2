@@ -230,7 +230,7 @@ impl Graphics {
     }
 }
 
-/// normalizes an u8 to f64 (color from 0-255 to 0.0-1.0)
-pub fn norm(num: u8) -> f64 {
-    num as f64 / 255.0
-}
+// /// normalizes an u8 to f64 (color from 0-255 to 0.0-1.0)
+// pub fn norm(num: u8) -> f64 {
+//     num as f64 / 255.0
+// }
