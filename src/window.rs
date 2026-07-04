@@ -75,7 +75,7 @@ impl ApplicationHandler for App {
                         // swallows device-lost errors
                         // so the surface silently stays
                         // unconfigured and the first render() panics
-                        .wgpu_backend(Backends::VULKAN | Backends::GL)
+                        .wgpu_backend(Backends::GL)
                         .build_async()
                         .await
                 }
