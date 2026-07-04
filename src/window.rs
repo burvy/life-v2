@@ -13,6 +13,8 @@ use winit::{
     window::{Window, WindowId},
 };
 
+use super::logic;
+
 pub struct Graphics {
     /// just make this the default
     /// window is window
@@ -72,7 +74,7 @@ impl ApplicationHandler for App {
             self.graphics = Some(Graphics { window, pixels, bg_clr: [0.0, 0.0, 0.0] });
             // TODO: use this to draw pixels!
             if let Some(graphics) = self.graphics.as_mut() {
-                    graphics.draw_pixel(67, 67, [255, 0, 100, 255]);
+                logic::draw_fn(graphics);
             }
             // try rendering immediately
             self.graphics.as_mut().unwrap().pixels.render().expect("initial render failed");
@@ -161,6 +163,29 @@ impl Graphics {
         // replaces the 4 elements that represent the color of the pixel with the input color
         self.pixels.frame_mut()[i..i + 4].copy_from_slice(&color);
     }
+
+    pub fn draw_pixel_on_grid(&mut self, pixel: PixelInfo) {
+        let (x, y, pixel_scale, color) = (pixel.x, pixel.y, pixel.scale, pixel.color);
+        let size = self.pixels.texture().size();
+        let (x_end, y_end) = (x * pixel_scale, y * pixel_scale);
+        if x_end >= size.width as usize || y_end >= size.height as usize {
+            eprintln!("pixel x={}, y={} is not in the window", x_end, y_end);
+            return;
+        }
+        let i = ((y * size.width as usize + x) * 4) as usize;
+        (0..pixel_scale).for_each(|j| {
+            let rowi = i + (j * y as usize);
+            self.pixels
+                .frame_mut()[rowi..rowi + (pixel_scale << 2)] // bit shifting * 4 for speed
+                .copy_from_slice(&color.repeat(pixel_scale))
+        });
+    }
+}
+pub struct PixelInfo {
+    pub x: usize,
+    pub y: usize,
+    pub scale: usize,
+    pub color: [u8; 4],
 }
 
 /// normalizes an u8 to f64 (color from 0-255 to 0.0-1.0)

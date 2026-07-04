@@ -1,3 +1,4 @@
+mod logic;
 mod window;
 use window::App;
 use winit::event_loop::EventLoop;
