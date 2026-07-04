@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc};
 
 use pixels::{
     Pixels, PixelsBuilder, SurfaceTexture,
@@ -6,11 +6,7 @@ use pixels::{
 };
 use pollster;
 use winit::{
-    application::ApplicationHandler,
-    dpi::LogicalSize,
-    event::WindowEvent,
-    event_loop::ActiveEventLoop,
-    window::{Window, WindowId},
+    application::ApplicationHandler, dpi::LogicalSize, event::{KeyEvent, WindowEvent}, event_loop::ActiveEventLoop, keyboard::NamedKey::Space, window::{Fullscreen, Window, WindowId},
 };
 
 use super::logic;
@@ -36,7 +32,7 @@ pub struct Graphics {
     /// RGB without the alpha to see if it doesnt crash
     pub bg_clr: [f64; 3],
 
-    pub grid: Vec<Vec<bool>>,
+    pub grid: Vec<bool>,
 }
 
 /// now all of T S boiler plate has to be written
@@ -57,7 +53,7 @@ impl ApplicationHandler for App {
             let window_attributes = Window::default_attributes()
                 .with_title("Cellular Automata") // this is probably how its spelled
                 // no transparency bc it might crash
-                .with_inner_size(LogicalSize::new(800, 600)); // do some more method shopping if u want
+                .with_fullscreen(Some(Fullscreen::Borderless(None)));
             // window is an arc which makes things so much better
             let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
             let size = window.inner_size();
@@ -87,7 +83,7 @@ impl ApplicationHandler for App {
                 pixels,
                 bg_clr: [0.0, 0.0, 0.0],
                 scale: 32,
-                grid: vec![vec![]]
+                grid: vec![]
                 }
             );
             // TODO: use this to draw pixels!
@@ -99,7 +95,7 @@ impl ApplicationHandler for App {
                 graphics.pixels.texture().size().height as usize,
             );
             let scale = graphics.scale;
-            graphics.grid = vec![vec![false; size_x / scale]; size_y / scale];
+            graphics.grid = vec![false; size_x * size_y];
             // draw graphics now
             logic::draw_fn(graphics);
 
@@ -137,12 +133,8 @@ impl ApplicationHandler for App {
             WindowEvent::CloseRequested => {
                 event_loop.exit();
             }
-            WindowEvent::CursorEntered { .. } => {
-                graphics.bg_clr = [norm(206), norm(66), norm(43)];
-                graphics.window.request_redraw();
-            }
-            WindowEvent::CursorLeft { .. } => {
-                graphics.bg_clr = [norm(43), norm(66), norm(206)]; // this would be the OPPOSITE of ferris orange
+            WindowEvent::KeyboardInput { .. } => {
+                logic::draw_fn(graphics); // TODO: redraw the window in a better place
                 graphics.window.request_redraw();
             }
             WindowEvent::RedrawRequested => {
