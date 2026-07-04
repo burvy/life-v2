@@ -159,7 +159,7 @@ impl Graphics {
         // it really sucks how theres no built in draw function/method
         // we can kind of simulate x and y, just note that it starts from the top left corner
         // the pixel buffer is kind of memory efficient i guess but weird
-        let i = ((y * size.width + x) * 4) as usize;
+        let i = ((y * size.width + x) << 2) as usize; // bitshifting hehe
         // replaces the 4 elements that represent the color of the pixel with the input color
         self.pixels.frame_mut()[i..i + 4].copy_from_slice(&color);
     }
@@ -172,12 +172,13 @@ impl Graphics {
             eprintln!("pixel x={}, y={} is not in the window", x_end, y_end);
             return;
         }
+        // i could be 0? what happens if you bitshift on 0
         let i = ((y * size.width as usize + x) * 4) as usize;
+        let row_len = (size.width << 2) as usize;
         (0..pixel_scale).for_each(|j| {
-            let rowi = i + (j * y as usize);
-            self.pixels
-                .frame_mut()[rowi..rowi + (pixel_scale << 2)] // bit shifting * 4 for speed
-                .copy_from_slice(&color.repeat(pixel_scale))
+            let row_start = j * row_len + i;
+            self.pixels.frame_mut()[row_start..row_start + (pixel_scale << 2)]
+                .copy_from_slice(&color.repeat(pixel_scale));
         });
     }
 }
