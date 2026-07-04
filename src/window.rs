@@ -1,4 +1,4 @@
-use std::{sync::Arc};
+use std::sync::Arc;
 
 use pixels::{
     Pixels, PixelsBuilder, SurfaceTexture,
@@ -6,7 +6,10 @@ use pixels::{
 };
 use pollster;
 use winit::{
-    application::ApplicationHandler, dpi::LogicalSize, event::{KeyEvent, WindowEvent}, event_loop::ActiveEventLoop, keyboard::NamedKey::Space, window::{Fullscreen, Window, WindowId},
+    application::ApplicationHandler,
+    event::WindowEvent,
+    event_loop::ActiveEventLoop,
+    window::{Fullscreen, Window, WindowId},
 };
 
 use super::logic;
