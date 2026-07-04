@@ -140,7 +140,6 @@ impl ApplicationHandler for App {
                 graphics.window.request_redraw();
             }
             WindowEvent::RedrawRequested => {
-
                     let window_size = graphics.window.inner_size();
                     let surface_size = graphics.pixels.texture().size();
                     if window_size.width != surface_size.width || window_size.height != surface_size.height {
