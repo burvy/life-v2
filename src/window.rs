@@ -24,6 +24,9 @@ pub struct Graphics {
     /// also compiler rlly wants this to have a lifetime so wtv
     pub pixels: Pixels<'static>,
 
+    /// the scale for drawing pixels, it might just be better to leave it here
+    pub scale: usize,
+
     /// RGB without the alpha to see if it doesnt crash
     pub bg_clr: [f64; 3],
 }
@@ -71,7 +74,8 @@ impl ApplicationHandler for App {
                         .await
                 }
             ).expect("couldn't create pixels");
-            self.graphics = Some(Graphics { window, pixels, bg_clr: [0.0, 0.0, 0.0] });
+            // TODO: move this somewhere more accessible
+            self.graphics = Some(Graphics { window, pixels, bg_clr: [0.0, 0.0, 0.0], scale: 10 });
             // TODO: use this to draw pixels!
             if let Some(graphics) = self.graphics.as_mut() {
                 logic::draw_fn(graphics);
@@ -166,28 +170,28 @@ impl Graphics {
     //     self.pixels.frame_mut()[i..i + 4].copy_from_slice(&color);
     // }
 
+    /// draws a pixel at the coordinates with color both provided in `PixelInfo`
+    /// and the size provided in the `Graphics` definition
     pub fn draw_pixel_on_grid(&mut self, pixel: PixelInfo) {
-        let (x, y, pixel_scale, color) = (pixel.x, pixel.y, pixel.scale, pixel.color);
         let size = self.pixels.texture().size();
-        let (x_end, y_end) = (x * pixel_scale, y * pixel_scale);
+        let (x_end, y_end) = (pixel.x * self.scale, pixel.y * self.scale);
         if x_end >= size.width as usize || y_end >= size.height as usize {
             eprintln!("pixel x={}, y={} is not in the window", x_end, y_end);
             return;
         }
         // i could be 0? what happens if you bitshift on 0
-        let i = ((y * size.width as usize + x) * 4) as usize;
+        let i = ((pixel.y * size.width as usize + pixel.x) * 4) as usize;
         let row_len = (size.width << 2) as usize;
-        (0..pixel_scale).for_each(|j| {
+        (0..self.scale).for_each(|j| {
             let row_start = j * row_len + i;
-            self.pixels.frame_mut()[row_start..row_start + (pixel_scale << 2)]
-                .copy_from_slice(&color.repeat(pixel_scale));
+            self.pixels.frame_mut()[row_start..row_start + (self.scale << 2)]
+                .copy_from_slice(&pixel.color.repeat(self.scale));
         });
     }
 }
 pub struct PixelInfo {
     pub x: usize,
     pub y: usize,
-    pub scale: usize,
     pub color: [u8; 4],
 }
 
