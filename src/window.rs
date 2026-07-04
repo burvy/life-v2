@@ -224,12 +224,10 @@ impl Graphics {
     /// draws a bunch of white lines for the grid specifically
     /// TODO: move this into grid drawing itself
     fn draw_v_lines(&mut self) {
-        let size = self.pixels.texture().size();
-        let mut i = 0;
-        for _ in 0..(size.width * size.height) as usize / self.scale {
-            self.pixels.frame_mut()[i..i + 4].copy_from_slice(&[255, 255, 255, 255]);
-            i += 4 * self.scale;
-        }
+        self.pixels
+            .frame_mut()
+            .chunks_exact_mut(4 * self.scale)
+            .for_each(|chunk| chunk[..4].copy_from_slice(&[255, 255, 255, 255]));
     }
 }
 
