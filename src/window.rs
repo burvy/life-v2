@@ -201,7 +201,7 @@ impl Graphics {
         let row_bytes = width * 4; // because each byte is 4 things; r, g, b, a
         self.pixels
             .frame_mut() // all tha pixels
-            .chunks_exact_mut(row_bytes * self.scale) // chunks of 4 rows
+            .chunks_mut(row_bytes * self.scale) // chunks of 4 rows and dont round off last line
             .for_each(|chunk|
                 chunk[..row_bytes] // get the row at the end
                 .copy_from_slice(&[255, 255, 255, 255]
@@ -213,7 +213,7 @@ impl Graphics {
             .frame_mut() // all of the pixels
             .chunks_exact_mut(row_bytes) // use window width not the predefined scale
             .for_each(|row| {
-                        row.chunks_exact_mut(4 * self.scale)
+                        row.chunks_mut(4 * self.scale) // so the last line doesnt cut off by round
                             .for_each(|chunk| chunk[..4].copy_from_slice(&[255, 255, 255, 255]));
                     });
     }
