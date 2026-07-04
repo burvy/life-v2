@@ -9,3 +9,11 @@ pub fn draw_fn(graphics: &mut window::Graphics) {
     });
     graphics.draw_grid();
 }
+
+fn grid_filler(grid: Vec<bool>, graphics: &mut window::Graphics) {
+    grid.iter()
+        .enumerate() // our structure is similar to the pixel buffer and is usable
+        .filter_map(|(i, &c)| if c { Some(i) } else { None })
+        .for_each(|i| )
+    todo!()
+}

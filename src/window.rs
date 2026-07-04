@@ -209,7 +209,7 @@ impl Graphics {
             .frame_mut() // all tha pixels
             .chunks_mut(row_bytes * self.scale) // chunks of rows (bytes), `scale` amount of rows
             .for_each(|chunk|
-                chunk[..row_bytes] // get the first row_bytes rows (the first row)
+                chunk[..row_bytes] // get the first row_bytes bytes (the first row)
                 .copy_from_slice(&[255, 255, 255, 255]
                     .repeat(width) // we have a whole row and fill in all pixels in the row!
                 )
