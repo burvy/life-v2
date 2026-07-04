@@ -193,6 +193,11 @@ impl Graphics {
                 .copy_from_slice(&pixel.color.repeat(self.scale));
         });
     }
+
+    /// just draws a white grid
+    pub fn draw_grid(&mut self) {
+        let color = [255, 255, 255, 255]; // white
+    }
 }
 
 /// normalizes an u8 to f64 (color from 0-255 to 0.0-1.0)
