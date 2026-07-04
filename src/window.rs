@@ -80,7 +80,7 @@ impl ApplicationHandler for App {
                 }
             ).expect("couldn't create pixels");
             // TODO: move this somewhere more accessible
-            self.graphics = Some(Graphics { window, pixels, bg_clr: [0.0, 0.0, 0.0], scale: 10 });
+            self.graphics = Some(Graphics { window, pixels, bg_clr: [0.0, 0.0, 0.0], scale: 32 });
             // TODO: use this to draw pixels!
             if let Some(graphics) = self.graphics.as_mut() {
                 logic::draw_fn(graphics);
