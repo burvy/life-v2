@@ -205,7 +205,7 @@ impl Graphics {
         let rep_y = size_y / scale;
         let rep_x = size_x / scale;
 
-        (0..rep_y).for_each(|i| self.draw_h_line(i << 4));
+        (0..rep_y).for_each(|i| self.draw_h_line(i * scale)); // mul by scale not 16
     }
 
     // draws a white line at the given y
