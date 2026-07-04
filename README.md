@@ -1,5 +1,9 @@
 # Rust Cellular Automata
+
 A cellular automata simulation built from scratch using **pixels** and **winit**.
-Since **pixels** uses a buffer to read/write pixels, much of the custom pixel drawing interface may be a bit confusing.
+
+Since **pixels** uses a buffer to read/write pixels, 
+much of the custom pixel drawing interface may be a bit confusing.
+
 This image below details the thought process behind the `draw_pixels_to_grid` method:
 ![draw_pixels_to_grid function](docs/images/draw_pixel_on_grid.jpg)
