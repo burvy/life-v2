@@ -197,6 +197,25 @@ impl Graphics {
     /// just draws a white grid
     pub fn draw_grid(&mut self) {
         let color = [255, 255, 255, 255]; // white
+        let (size_x, size_y) = (
+            self.pixels.texture().size().width as usize,
+            self.pixels.texture().size().height as usize
+        );
+        let scale = self.scale;
+        let rep_y = size_y / scale;
+        let rep_x = size_x / scale;
+
+        // TODO: replace this, just testing
+        self.draw_h_line(20);
+    }
+
+    // draws a white line at the given y
+    fn draw_h_line(&mut self, y: usize) {
+        let size = self.pixels.texture().size();
+        let row_start = y * size.width as usize * 4;
+        let row_end = row_start + (size.width as usize) * 4;
+        self.pixels.frame_mut()[row_start..row_end]
+            .copy_from_slice(&[255, 255, 255, 255].repeat(size.width as usize));
     }
 }
 

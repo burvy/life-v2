@@ -5,5 +5,6 @@ pub fn draw_fn(graphics: &mut window::Graphics) {
         x: 1,
         y: 1,
         color: [255, 255, 255, 255],
-    })
+    });
+    graphics.draw_grid();
 }
