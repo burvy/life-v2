@@ -211,8 +211,11 @@ impl Graphics {
         // drawing vertical lines
         self.pixels
             .frame_mut() // all of the pixels
-            .chunks_exact_mut(4 * self.scale) // divide into chunks
-            .for_each(|chunk| chunk[..4].copy_from_slice(&[255, 255, 255, 255]));
+            .chunks_exact_mut(row_bytes) // use window width not the predefined scale
+            .for_each(|row| {
+                        row.chunks_exact_mut(4 * self.scale)
+                            .for_each(|chunk| chunk[..4].copy_from_slice(&[255, 255, 255, 255]));
+                    });
     }
 }
 
