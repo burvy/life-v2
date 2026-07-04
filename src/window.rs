@@ -190,8 +190,7 @@ impl Graphics {
     /// and the size provided in the `Graphics` definition
     pub fn draw_pixel_on_grid(&mut self, pixel: PixelInfo) {
         let size = self.pixels.texture().size();
-        // i could be 0? what happens if you bitshift on 0
-        let i = ((pixel.y * size.width as usize + pixel.x) * 4) as usize;
+        let i = ((pixel.y * size.width as usize + pixel.x) << 2) as usize;
         let row_len = (size.width << 2) as usize;
         (0..self.scale).for_each(|j| {
             let row_start = j * row_len + i;
