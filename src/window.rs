@@ -207,7 +207,7 @@ impl Graphics {
         let row_bytes = width * 4; // because each byte is 4 things; r, g, b, a
         self.pixels
             .frame_mut() // all tha pixels
-            .chunks_mut(row_bytes * self.scale) // chunks of 4 rows and dont round off last line
+            .chunks_mut(row_bytes * self.scale) // chunks of rows (bytes)
             .for_each(|chunk|
                 chunk[..row_bytes] // get the row at the end
                 .copy_from_slice(&[255, 255, 255, 255]
