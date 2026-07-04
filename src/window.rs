@@ -196,37 +196,22 @@ impl Graphics {
 
     /// just draws a white grid
     pub fn draw_grid(&mut self) {
-        let (size_x, size_y) = (
-            self.pixels.texture().size().width as usize,
-            self.pixels.texture().size().height as usize
-        );
-        let scale = self.scale;
-        let rep_y = size_y / scale;
-        let rep_x = size_x / scale;
-
-        (0..rep_y).for_each(|i| self.draw_h_line(i * scale)); // mul by scale not 16
-        (0..rep_x).for_each(|i| self.draw_v_lines());
-    }
-
-    /// draws a white line at the given y
-    fn draw_h_line(&mut self, y: usize) {
-        let size = self.pixels.texture().size();
-        if y >= size.height as usize {
-            eprintln!("pixel y={} is not in the window", y);
-            return;
-        }
-        let row_start = y * size.width as usize * 4;
-        let row_end = row_start + (size.width as usize) * 4;
-        self.pixels.frame_mut()[row_start..row_end]
-            .copy_from_slice(&[255, 255, 255, 255].repeat(size.width as usize));
-    }
-
-    /// draws a bunch of white lines for the grid specifically
-    /// TODO: move this into grid drawing itself
-    fn draw_v_lines(&mut self) {
+        // drawing horizontal lines
+        let width = self.pixels.texture().size().width as usize;
+        let row_bytes = width * 4; // because each byte is 4 things; r, g, b, a
         self.pixels
-            .frame_mut()
-            .chunks_exact_mut(4 * self.scale)
+            .frame_mut() // all tha pixels
+            .chunks_exact_mut(row_bytes * self.scale) // chunks of 4 rows
+            .for_each(|chunk|
+                chunk[..row_bytes] // get the row at the end
+                .copy_from_slice(&[255, 255, 255, 255]
+                    .repeat(width) // we have a whole row and fill in all pixels in the row!
+                )
+            );
+        // drawing vertical lines
+        self.pixels
+            .frame_mut() // all of the pixels
+            .chunks_exact_mut(4 * self.scale) // divide into chunks
             .for_each(|chunk| chunk[..4].copy_from_slice(&[255, 255, 255, 255]));
     }
 }
