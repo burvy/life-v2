@@ -97,7 +97,6 @@ impl ApplicationHandler for App {
                 graphics.pixels.texture().size().width as usize,
                 graphics.pixels.texture().size().height as usize,
             );
-            let scale = graphics.scale;
             graphics.grid = vec![false; size_x * size_y];
             // draw graphics now
             logic::draw_fn(graphics);
