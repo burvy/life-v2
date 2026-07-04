@@ -196,7 +196,6 @@ impl Graphics {
 
     /// just draws a white grid
     pub fn draw_grid(&mut self) {
-        let color = [255, 255, 255, 255]; // white
         let (size_x, size_y) = (
             self.pixels.texture().size().width as usize,
             self.pixels.texture().size().height as usize
@@ -206,9 +205,10 @@ impl Graphics {
         let rep_x = size_x / scale;
 
         (0..rep_y).for_each(|i| self.draw_h_line(i * scale)); // mul by scale not 16
+        (0..rep_x).for_each(|i| self.draw_v_lines());
     }
 
-    // draws a white line at the given y
+    /// draws a white line at the given y
     fn draw_h_line(&mut self, y: usize) {
         let size = self.pixels.texture().size();
         if y >= size.height as usize {
@@ -219,6 +219,17 @@ impl Graphics {
         let row_end = row_start + (size.width as usize) * 4;
         self.pixels.frame_mut()[row_start..row_end]
             .copy_from_slice(&[255, 255, 255, 255].repeat(size.width as usize));
+    }
+
+    /// draws a bunch of white lines for the grid specifically
+    /// TODO: move this into grid drawing itself
+    fn draw_v_lines(&mut self) {
+        let size = self.pixels.texture().size();
+        let mut i = 0;
+        for _ in 0..(size.width * size.height) as usize / self.scale {
+            self.pixels.frame_mut()[i..i + 4].copy_from_slice(&[255, 255, 255, 255]);
+            i += 4 * self.scale;
+        }
     }
 }
 
