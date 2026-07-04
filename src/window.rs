@@ -35,6 +35,8 @@ pub struct Graphics {
 
     /// RGB without the alpha to see if it doesnt crash
     pub bg_clr: [f64; 3],
+
+    pub grid: Vec<Vec<bool>>,
 }
 
 /// now all of T S boiler plate has to be written
@@ -80,11 +82,27 @@ impl ApplicationHandler for App {
                 }
             ).expect("couldn't create pixels");
             // TODO: move this somewhere more accessible
-            self.graphics = Some(Graphics { window, pixels, bg_clr: [0.0, 0.0, 0.0], scale: 32 });
+            self.graphics = Some(Graphics {
+                window,
+                pixels,
+                bg_clr: [0.0, 0.0, 0.0],
+                scale: 32,
+                grid: vec![vec![]]
+                }
+            );
             // TODO: use this to draw pixels!
-            if let Some(graphics) = self.graphics.as_mut() {
-                logic::draw_fn(graphics);
-            }
+            let graphics = self.graphics.as_mut().expect("could not create graphics");
+
+            // initialize the grid
+            let (size_x, size_y) = (
+                graphics.pixels.texture().size().width as usize,
+                graphics.pixels.texture().size().height as usize,
+            );
+            let scale = graphics.scale;
+            graphics.grid = vec![vec![false; size_x / scale]; size_y / scale];
+            // draw graphics now
+            logic::draw_fn(graphics);
+
             // try rendering immediately
             self.graphics.as_mut().unwrap().pixels.render().expect("initial render failed");
             self.graphics.as_ref().unwrap().window.request_redraw();
