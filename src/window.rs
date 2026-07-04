@@ -205,13 +205,16 @@ impl Graphics {
         let rep_y = size_y / scale;
         let rep_x = size_x / scale;
 
-        // TODO: replace this, just testing
-        self.draw_h_line(20);
+        (0..rep_y).for_each(|i| self.draw_h_line(i << 4));
     }
 
     // draws a white line at the given y
     fn draw_h_line(&mut self, y: usize) {
         let size = self.pixels.texture().size();
+        if y >= size.height as usize {
+            eprintln!("pixel y={} is not in the window", y);
+            return;
+        }
         let row_start = y * size.width as usize * 4;
         let row_end = row_start + (size.width as usize) * 4;
         self.pixels.frame_mut()[row_start..row_end]
