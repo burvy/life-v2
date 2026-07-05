@@ -1,12 +1,19 @@
-use std::{sync::Arc, time::{Duration, Instant}};
+use std::{
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 use pixels::{
-    Pixels, PixelsBuilder, SurfaceTexture,
     wgpu::{Backends, Color},
+    Pixels, PixelsBuilder, SurfaceTexture,
 };
 use pollster;
 use winit::{
-    application::ApplicationHandler, dpi::PhysicalPosition, event::{ElementState::Pressed, WindowEvent}, event_loop::{ActiveEventLoop, ControlFlow}, window::{Fullscreen, Window, WindowId},
+    application::ApplicationHandler,
+    dpi::PhysicalPosition,
+    event::{ElementState::Pressed, WindowEvent},
+    event_loop::{ActiveEventLoop, ControlFlow},
+    window::{Fullscreen, Window, WindowId},
 };
 
 use super::logic;
@@ -71,23 +78,11 @@ impl ApplicationHandler for App {
             println!("created pixels with size {}x{}", size.width, size.height);
             // so we can solve borrow checker issues by just cloning window earlier
             let surface_texture = SurfaceTexture::new(size.width, size.height, window.clone());
-            // the alternative to not using pollster is horrific so we should use it
-            let pixels = pollster::block_on(
-                async {
-                    // if u dont know what await is we just poll this until its done
-                    PixelsBuilder::new(size.width, size.height, surface_texture)
-                        // dont use Backends::all() (the default)
-                        // dx12 has no adapters on
-                        // my machine but still puts a DXGI surface on the window, which
-                        // gets the vulkan device lost during Surface::configure and wgpu
-                        // swallows device-lost errors
-                        // so the surface silently stays
-                        // unconfigured and the first render() panics
-                        .wgpu_backend(Backends::GL)
-                        .build_async()
-                        .await
-                }
-            ).expect("couldn't create pixels");
+            // no pollster!!!
+            let pixels = PixelsBuilder::new(size.width, size.height, surface_texture)
+                .wgpu_backend(Backends::GL) // maybe use vulkan too if u can
+                .build()
+                .expect("some error while making pxels");
             // TODO: move this somewhere more accessible
             self.graphics = Some(Graphics {
                 window,
@@ -97,8 +92,7 @@ impl ApplicationHandler for App {
                 grid: vec![],
                 next_tick: Instant::now(),
                 cursor_pos: PhysicalPosition { x: 0.0, y: 0.0 },
-                }
-            );
+            });
             // TODO: use this to draw pixels!
             let graphics = self.graphics.as_mut().expect("could not create graphics");
 
@@ -112,7 +106,12 @@ impl ApplicationHandler for App {
             logic::draw_fn(graphics);
 
             // try rendering immediately
-            self.graphics.as_mut().unwrap().pixels.render().expect("initial render failed");
+            self.graphics
+                .as_mut()
+                .unwrap()
+                .pixels
+                .render()
+                .expect("initial render failed");
             self.graphics.as_ref().unwrap().window.request_redraw();
         }
     }
@@ -130,9 +129,13 @@ impl ApplicationHandler for App {
                     // window while the old one still owns it which is an Invalid surface
                     // error on vulkan
                     // resizing the existing one reconfigures in place
-                    graphics.pixels.resize_surface(size.width, size.height)
+                    graphics
+                        .pixels
+                        .resize_surface(size.width, size.height)
                         .expect("couldn't resize surface");
-                    graphics.pixels.resize_buffer(size.width, size.height)
+                    graphics
+                        .pixels
+                        .resize_buffer(size.width, size.height)
                         .expect("couldn't resize buffer");
                     graphics.window.request_redraw();
                 }
@@ -140,7 +143,9 @@ impl ApplicationHandler for App {
             return;
         }
         println!("{:?} happened to window {:?}", &event, &window_id); // can we do something with window_id
-        let Some(graphics) = self.graphics.as_mut() else { return; };
+        let Some(graphics) = self.graphics.as_mut() else {
+            return;
+        };
         match event {
             WindowEvent::CloseRequested => {
                 event_loop.exit();
@@ -167,21 +172,23 @@ impl ApplicationHandler for App {
                 graphics.window.request_redraw();
             }
             WindowEvent::RedrawRequested => {
-                    let window_size = graphics.window.inner_size();
-                    let surface_size = graphics.pixels.texture().size();
-                    if window_size.width != surface_size.width || window_size.height != surface_size.height {
-                        println!("size mismatch, skipping render");
-                        return;
-                    }
-                    let [r, g, b,] = graphics.bg_clr;
-
-                    graphics.pixels.clear_color(Color { r, g, b, a: 1.0 });
-
-                    if let Err(err) = graphics.pixels.render() {
-                        println!("couldnt render pixels bc of error: {err}");
-                        event_loop.exit();
-                    }
+                let window_size = graphics.window.inner_size();
+                let surface_size = graphics.pixels.texture().size();
+                if window_size.width != surface_size.width
+                    || window_size.height != surface_size.height
+                {
+                    println!("size mismatch, skipping render");
+                    return;
                 }
+                let [r, g, b] = graphics.bg_clr;
+
+                graphics.pixels.clear_color(Color { r, g, b, a: 1.0 });
+
+                if let Err(err) = graphics.pixels.render() {
+                    println!("couldnt render pixels bc of error: {err}");
+                    event_loop.exit();
+                }
+            }
             _ => (),
         }
     }
@@ -248,20 +255,20 @@ impl Graphics {
         self.pixels
             .frame_mut() // all tha pixels
             .chunks_mut(row_bytes * self.scale) // chunks of rows (bytes), `scale` amount of rows
-            .for_each(|chunk|
+            .for_each(|chunk| {
                 chunk[..row_bytes] // get the first row_bytes bytes (the first row)
-                .copy_from_slice(&[255, 255, 255, 255]
-                    .repeat(width) // we have a whole row and fill in all pixels in the row!
-                )
-            );
+                    .copy_from_slice(
+                        &[255, 255, 255, 255].repeat(width), // we have a whole row and fill in all pixels in the row!
+                    )
+            });
         // drawing vertical lines
         self.pixels
             .frame_mut() // all of the pixels
             .chunks_exact_mut(row_bytes) // use window width not the predefined scale
             .for_each(|row| {
-                        row.chunks_mut(4 * self.scale) // so the last line doesnt cut off by round
+                row.chunks_mut(4 * self.scale) // so the last line doesnt cut off by round
                             .for_each(|chunk| chunk[..4].copy_from_slice(&[255, 255, 255, 255]));
-                    });
+            });
     }
 }
 
