@@ -44,6 +44,11 @@ pub struct Graphics {
     // indexing through the inner elements is horizontal
     pub grid: Vec<Vec<bool>>,
 
+    /// use this to store the next tick
+    /// well
+    /// thats self explanatory
+    /// if now is more than this time then update this time and run your logic
+    /// TODO: find a stable way to do a loop
     pub next_tick: std::time::Instant,
 
     /// stores the last known position of the cursor
