@@ -3,15 +3,33 @@ use std::ops::Deref;
 use super::window;
 
 struct NeighborBehavior {
-    one: bool,
-    two: bool,
-    three: bool,
-    four: bool,
-    five: bool,
-    six: bool,
-    seven: bool,
-    eight: bool,
+    one: Behavior,
+    two: Behavior,
+    three: Behavior,
+    four: Behavior,
+    five: Behavior,
+    six: Behavior,
+    seven: Behavior,
+    eight: Behavior,
 }
+enum Behavior {
+    Birth,
+    Survive,
+    Die,
+}
+
+use Behavior::{Birth, Die, Survive};
+
+const CONFIG: NeighborBehavior = NeighborBehavior {
+    one: Die,
+    two: Survive,
+    three: Birth,
+    four: Die,
+    five: Die,
+    six: Die,
+    seven: Die,
+    eight: Die,
+};
 
 /// this function is called to draw graphics in the window
 pub fn draw_fn(graphics: &mut window::Graphics) {
@@ -40,7 +58,7 @@ fn grid_looper(graphics: &mut window::Graphics) {
                         .get_mut(y)
                         .and_then(|row| row.get_mut(x))
                         .expect("grid cant be mutated") =
-                        neighbor_condition(neighbor_count(graphics, x, y));
+                        neighbor_condition(neighbor_count(graphics, x, y), CONFIG);
                 } else {
                     graphics.draw_pixel_on_grid(window::PixelInfo {
                         x: x * graphics.scale,
@@ -53,7 +71,7 @@ fn grid_looper(graphics: &mut window::Graphics) {
 }
 
 /// checks input neighbor count and tells you if this cell should be alive
-fn neighbor_condition(count: u8) -> bool {
+fn neighbor_condition(count: u8, config: NeighborBehavior) -> bool {
     todo!()
 }
 
