@@ -19,6 +19,6 @@ drawing, scaffolding for the cellular automata in `logic.rs`
 [`logic.rs`](src/logic.rs): contains the cellular automata logic, 
 and uses the interface in `window.rs` to display changes to the screen.
 
-# `logic.rs`
+## `logic.rs`
 `logic.rs` is by far the most interesting file in my code, as it contains the actual cellular automata logic. 
 Lets see it!!
