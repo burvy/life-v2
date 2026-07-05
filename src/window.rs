@@ -10,7 +10,7 @@ use pixels::{
 use winit::{
     application::ApplicationHandler,
     dpi::PhysicalPosition,
-    event::{ElementState::Pressed, WindowEvent},
+    event::{ElementState::Pressed, MouseScrollDelta, WindowEvent},
     event_loop::{ActiveEventLoop, ControlFlow},
     keyboard::KeyCode::Space,
     window::{Fullscreen, Window, WindowId},
