@@ -25,20 +25,17 @@ Lets see it!!
 
 ### STRUCTURES
 #### `Behavior` 
-An enum with 3 members: `Birth`, `Earth`, `Death`. 
-
+An enum with 3 members: `Birth`, `Earth`, `Death`.  
 I chose these names because they all have 5 letters in them.
-
 - `Birth` signals that a cell should be turned on no matter what, 
 - `Earth` signals a cell should persist if it existed in the last generation,
 - `Death` signals that a cell should be turned off no matter what.
 
 #### `NeighborBehavior`
-a struct containing an array of 9 `Behavior`s.
-
-This list represents the configuration for the cellular automata universe.
-
+a struct containing an array of 9 `Behavior`s.  
+This list represents the configuration for the cellular automata universe.  
 It must be 9 members to represent all possibilities, a cell may have 0 to 8 members around them, 
-inclusive of 0 and 8. `[0, 1, 2, 3, 4, 5, 6, 7, 8]` is 9 members,whether you like it or not.
+inclusive of 0 and 8.  
+`[0, 1, 2, 3, 4, 5, 6, 7, 8]` is 9 members,whether you like it or not.
 
 A simple array is enough for my needs.
