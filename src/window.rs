@@ -110,7 +110,7 @@ impl ApplicationHandler for App {
             );
             graphics.grid = vec![vec![false; size_x / graphics.scale]; size_y / graphics.scale];
             // draw graphics now
-            logic::draw_fn(graphics);
+            logic::draw_fn(graphics, self.paused);
 
             // try rendering immediately
             self.graphics
@@ -149,7 +149,6 @@ impl ApplicationHandler for App {
             }
             return;
         }
-        println!("{:?} happened to window {:?}", &event, &window_id); // can we do something with window_id
         let Some(graphics) = self.graphics.as_mut() else {
             return;
         };
@@ -194,7 +193,7 @@ impl ApplicationHandler for App {
                         }
                     }
                 }
-                logic::draw_fn(graphics); // TODO: redraw the window in a better place
+                logic::draw_fn(graphics, self.paused); // TODO: redraw the window in a better place
                 graphics.window.request_redraw();
             }
             WindowEvent::RedrawRequested => {
@@ -226,9 +225,11 @@ impl ApplicationHandler for App {
             return;
         };
         if Instant::now() >= graphics.next_tick {
-            logic::draw_fn(graphics);
-            graphics.window.request_redraw();
-            graphics.next_tick = Instant::now() + Duration::from_secs(1); // change the cooldown as u wish
+            if !self.paused {
+                logic::draw_fn(graphics, self.paused);
+                graphics.window.request_redraw();
+            }
+            graphics.next_tick = Instant::now() + Duration::from_millis(100); // change the cooldown as u wish
         }
         event_loop.set_control_flow(ControlFlow::WaitUntil(graphics.next_tick));
     }

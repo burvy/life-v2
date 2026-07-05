@@ -1,3 +1,5 @@
+use crate::window::Graphics;
+
 use super::window;
 
 struct NeighborBehavior([Behavior; 9]);
@@ -16,12 +18,12 @@ const CONFIG: NeighborBehavior = NeighborBehavior([
 ]);
 
 /// this function is called to draw graphics in the window
-pub fn draw_fn(graphics: &mut window::Graphics) {
-    grid_looper(graphics);
+pub fn draw_fn(graphics: &mut window::Graphics, paused: bool) {
+    grid_looper(graphics, paused);
     graphics.draw_grid();
 }
 
-fn grid_looper(graphics: &mut window::Graphics) {
+fn grid_looper(graphics: &mut window::Graphics, paused: bool) {
     let prev = graphics.grid.clone(); // we change graphics through this be careful
     prev.iter().enumerate().for_each(|(y, row)| {
         row.iter().enumerate().for_each(|(x, &pix)| {
@@ -35,32 +37,36 @@ fn grid_looper(graphics: &mut window::Graphics) {
                 y: y * graphics.scale,
                 color,
             });
-            // mutate like this
-            *graphics
-                .grid
-                .get_mut(y)
-                .and_then(|row| row.get_mut(x))
-                .expect("grid cant be mutated") =
-                match neighbor_condition(neighbor_count(&mut graphics.grid, x, y), &CONFIG)
-                    .unwrap_or(Death)
-                {
-                    Birth => true,
-                    Earth => {
-                        if *graphics
-                            .grid
-                            .get(y)
-                            .and_then(|row| row.get(x))
-                            .expect("grid couldnt be read here")
-                        {
-                            true
-                        } else {
-                            false
-                        }
-                    }
-                    Death => false,
-                }
+            if !paused {
+                life_logic(graphics, x, y)
+            }
         })
     });
+}
+fn life_logic(graphics: &mut Graphics, x: usize, y: usize) {
+    // mutate like this
+    *graphics
+        .grid
+        .get_mut(y)
+        .and_then(|row| row.get_mut(x))
+        .expect("grid cant be mutated") =
+        match neighbor_condition(neighbor_count(&mut graphics.grid, x, y), &CONFIG).unwrap_or(Death)
+        {
+            Birth => true,
+            Earth => {
+                if *graphics
+                    .grid
+                    .get(y)
+                    .and_then(|row| row.get(x))
+                    .expect("grid couldnt be read here")
+                {
+                    true
+                } else {
+                    false
+                }
+            }
+            Death => false,
+        }
 }
 
 /// checks input neighbor count and tells you if this cell should be alive
