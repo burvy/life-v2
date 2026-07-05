@@ -152,6 +152,8 @@ impl ApplicationHandler for App {
                         graphics.cursor_pos.y as usize / graphics.scale,
                     );
                     // even if you click the very edge
+                    // will not panic
+                    // please use this instead of grid[y][x]
                     if let Some(cell) = graphics.grid.get_mut(y).and_then(|row| row.get_mut(x)) {
                         *cell = true;
                     }
