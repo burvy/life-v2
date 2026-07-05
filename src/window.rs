@@ -10,7 +10,7 @@ use pixels::{
 use winit::{
     application::ApplicationHandler,
     dpi::PhysicalPosition,
-    event::{ElementState::Pressed, KeyEvent, WindowEvent},
+    event::{ElementState::Pressed, KeyEvent, MouseScrollDelta, WindowEvent},
     event_loop::{ActiveEventLoop, ControlFlow},
     keyboard::KeyCode::Space,
     window::{Fullscreen, Window, WindowId},
@@ -69,6 +69,8 @@ pub struct App {
     pub graphics: Option<Graphics>,
 
     pub paused: bool,
+
+    pub speed: u64,
 }
 
 impl ApplicationHandler for App {
@@ -153,6 +155,13 @@ impl ApplicationHandler for App {
             return;
         };
         match event {
+            WindowEvent::MouseWheel { delta, .. } => {
+                let y = match delta {
+                    MouseScrollDelta::LineDelta(_, y) => y as f64,
+                    MouseScrollDelta::PixelDelta(PhysicalPosition { y, .. }) => y / 20.0,
+                };
+                self.speed = (self.speed as f64 - y * 20.0).min(1.0).max(200.0) as u64;
+            }
             WindowEvent::CloseRequested => {
                 event_loop.exit();
             }
@@ -223,7 +232,8 @@ impl ApplicationHandler for App {
         if Instant::now() >= graphics.next_tick {
             logic::draw_fn(graphics, self.paused);
             graphics.window.request_redraw();
-            graphics.next_tick = Instant::now() + Duration::from_millis(100); // change the cooldown as u wish
+            graphics.next_tick = Instant::now() + Duration::from_millis(self.speed);
+            // change the cooldown as u wish
         }
         event_loop.set_control_flow(ControlFlow::WaitUntil(graphics.next_tick));
     }
