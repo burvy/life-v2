@@ -20,7 +20,7 @@ const CONFIG: NeighborBehavior = NeighborBehavior([
 /// this function is called to draw graphics in the window
 pub fn draw_fn(graphics: &mut window::Graphics, paused: bool) {
     grid_looper(graphics, paused);
-    graphics.draw_grid();
+    graphics.draw_grid(paused);
 }
 
 fn grid_looper(graphics: &mut window::Graphics, paused: bool) {

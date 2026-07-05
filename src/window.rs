@@ -269,7 +269,7 @@ impl Graphics {
     }
 
     /// just draws a white grid
-    pub fn draw_grid(&mut self) {
+    pub fn draw_grid(&mut self, paused: bool) {
         // drawing horizontal lines
         let width = self.pixels.texture().size().width as usize;
         let row_bytes = width * 4; // because each byte is 4 things; r, g, b, a
@@ -279,7 +279,12 @@ impl Graphics {
             .for_each(|chunk| {
                 chunk[..row_bytes] // get the first row_bytes bytes (the first row)
                     .copy_from_slice(
-                        &[255, 255, 255, 255].repeat(width), // we have a whole row and fill in all pixels in the row!
+                        &if !paused {
+                            [255, 255, 255, 255]
+                        } else {
+                            [255, 0, 0, 255]
+                        }
+                        .repeat(width), // we have a whole row and fill in all pixels in the row!
                     )
             });
         // drawing vertical lines
@@ -288,7 +293,13 @@ impl Graphics {
             .chunks_exact_mut(row_bytes) // use window width not the predefined scale
             .for_each(|row| {
                 row.chunks_mut(4 * self.scale) // so the last line doesnt cut off by round
-                            .for_each(|chunk| chunk[..4].copy_from_slice(&[255, 255, 255, 255]));
+                    .for_each(|chunk| {
+                        chunk[..4].copy_from_slice(&if !paused {
+                            [255, 255, 255, 255]
+                        } else {
+                            [255, 0, 0, 255]
+                        })
+                    });
             });
     }
 }
