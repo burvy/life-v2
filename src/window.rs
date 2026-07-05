@@ -40,6 +40,9 @@ pub struct Graphics {
 
     pub next_tick: std::time::Instant,
 
+    /// stores the last known position of the cursor
+    /// it only updates on move
+    /// go look in the code
     pub cursor_pos: PhysicalPosition<f64>,
 }
 
