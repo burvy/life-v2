@@ -10,8 +10,9 @@ use pixels::{
 use winit::{
     application::ApplicationHandler,
     dpi::PhysicalPosition,
-    event::{ElementState::Pressed, WindowEvent},
+    event::{ElementState::Pressed, KeyEvent, WindowEvent},
     event_loop::{ActiveEventLoop, ControlFlow},
+    keyboard::KeyCode::Space,
     window::{Fullscreen, Window, WindowId},
 };
 
@@ -66,6 +67,8 @@ pub struct Graphics {
 #[derive(Default)]
 pub struct App {
     pub graphics: Option<Graphics>,
+
+    pub paused: bool,
 }
 
 impl ApplicationHandler for App {
@@ -170,8 +173,27 @@ impl ApplicationHandler for App {
                         *cell = true;
                     }
                 }
+                if button == winit::event::MouseButton::Right && state == Pressed {
+                    let (x, y) = (
+                        graphics.cursor_pos.x as usize / graphics.scale,
+                        graphics.cursor_pos.y as usize / graphics.scale,
+                    );
+                    // even if you click the very edge
+                    // will not panic
+                    // please use this instead of grid[y][x]
+                    if let Some(cell) = graphics.grid.get_mut(y).and_then(|row| row.get_mut(x)) {
+                        *cell = false;
+                    }
+                }
             }
-            WindowEvent::KeyboardInput { .. } => {
+            WindowEvent::KeyboardInput { event, .. } => {
+                match event {
+                    KeyEvent { physical_key, .. } => {
+                        if physical_key == Space {
+                            self.paused = !self.paused;
+                        }
+                    }
+                }
                 logic::draw_fn(graphics); // TODO: redraw the window in a better place
                 graphics.window.request_redraw();
             }
