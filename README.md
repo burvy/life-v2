@@ -32,10 +32,15 @@ I chose these names because they all have 5 letters in them.
 - `Death` signals that a cell should be turned off no matter what.
 
 #### `NeighborBehavior`
-a struct containing an array of 9 `Behavior`s.  
+A struct containing an array of 9 `Behavior`s.  
 This list represents the configuration for the cellular automata universe.  
 It must be 9 members to represent all possibilities, a cell may have 0 to 8 members around them, 
 inclusive of 0 and 8.  
 `[0, 1, 2, 3, 4, 5, 6, 7, 8]` is 9 members,whether you like it or not.
 
 A simple array is enough for my needs.
+
+### FUNCTIONS
+#### `draw_fn`
+An orchestrator function that is meant to draw the different elements.  
+It essentially acts as an abstraction layer.
