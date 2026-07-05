@@ -186,12 +186,8 @@ impl ApplicationHandler for App {
                 }
             }
             WindowEvent::KeyboardInput { event, .. } => {
-                match event {
-                    KeyEvent { physical_key, .. } => {
-                        if physical_key == Space {
-                            self.paused = !self.paused;
-                        }
-                    }
+                if event.state == Pressed && !event.repeat && event.physical_key == Space {
+                    self.paused = !self.paused;
                 }
                 logic::draw_fn(graphics, self.paused); // TODO: redraw the window in a better place
                 graphics.window.request_redraw();
@@ -225,10 +221,8 @@ impl ApplicationHandler for App {
             return;
         };
         if Instant::now() >= graphics.next_tick {
-            if !self.paused {
-                logic::draw_fn(graphics, self.paused);
-                graphics.window.request_redraw();
-            }
+            logic::draw_fn(graphics, self.paused);
+            graphics.window.request_redraw();
             graphics.next_tick = Instant::now() + Duration::from_millis(100); // change the cooldown as u wish
         }
         event_loop.set_control_flow(ControlFlow::WaitUntil(graphics.next_tick));
