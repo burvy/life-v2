@@ -11,8 +11,10 @@ Try running the executable in Releases!
 # DESIGN
 There are three main files as of **July 5th 2026**:
 
-[`main.rs`](src/main.rs)
+[`main.rs`](src/main.rs): starts off winit/pixels in `window.rs`.
 
-[`window.rs`](src/window.rs)
+[`window.rs`](src/window.rs): custom-built interface to handle window creation, 
+drawing, scaffolding for the cellular automata in `logic.rs`
 
-[`logic.rs`](src/logic.rs)
+[`logic.rs`](src/logic.rs): contains the cellular automata logic, 
+and uses the interface in `window.rs` to display changes to the screen.
