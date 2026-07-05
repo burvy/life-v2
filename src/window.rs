@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::{Duration, Instant}};
 
 use pixels::{
     Pixels, PixelsBuilder, SurfaceTexture,
@@ -6,10 +6,7 @@ use pixels::{
 };
 use pollster;
 use winit::{
-    application::ApplicationHandler,
-    event::WindowEvent,
-    event_loop::ActiveEventLoop,
-    window::{Fullscreen, Window, WindowId},
+    application::ApplicationHandler, dpi::PhysicalPosition, event::{ElementState::Pressed, WindowEvent}, event_loop::{ActiveEventLoop, ControlFlow}, window::{Fullscreen, Window, WindowId},
 };
 
 use super::logic;
@@ -35,7 +32,15 @@ pub struct Graphics {
     /// RGB without the alpha to see if it doesnt crash
     pub bg_clr: [f64; 3],
 
-    pub grid: Vec<bool>,
+    // abstract mutable grid
+    // the grid is (y, x) format if you try to use it
+    // indexing through the row elements is vertical,
+    // indexing through the inner elements is horizontal
+    pub grid: Vec<Vec<bool>>,
+
+    pub next_tick: std::time::Instant,
+
+    pub cursor_pos: PhysicalPosition<f64>,
 }
 
 /// now all of T S boiler plate has to be written
@@ -86,7 +91,9 @@ impl ApplicationHandler for App {
                 pixels,
                 bg_clr: [0.0, 0.0, 0.0],
                 scale: 32,
-                grid: vec![]
+                grid: vec![],
+                next_tick: Instant::now(),
+                cursor_pos: PhysicalPosition { x: 0.0, y: 0.0 },
                 }
             );
             // TODO: use this to draw pixels!
@@ -97,7 +104,7 @@ impl ApplicationHandler for App {
                 graphics.pixels.texture().size().width as usize,
                 graphics.pixels.texture().size().height as usize,
             );
-            graphics.grid = vec![false; size_x * size_y];
+            graphics.grid = vec![vec![false; size_x / graphics.scale]; size_y / graphics.scale];
             // draw graphics now
             logic::draw_fn(graphics);
 
@@ -135,6 +142,21 @@ impl ApplicationHandler for App {
             WindowEvent::CloseRequested => {
                 event_loop.exit();
             }
+            WindowEvent::CursorMoved { position, .. } => {
+                graphics.cursor_pos = position;
+            }
+            WindowEvent::MouseInput { button, state, .. } => {
+                if button == winit::event::MouseButton::Left && state == Pressed {
+                    let (x, y) = (
+                        graphics.cursor_pos.x as usize / graphics.scale,
+                        graphics.cursor_pos.y as usize / graphics.scale,
+                    );
+                    // even if you click the very edge
+                    if let Some(cell) = graphics.grid.get_mut(y).and_then(|row| row.get_mut(x)) {
+                        *cell = true;
+                    }
+                }
+            }
             WindowEvent::KeyboardInput { .. } => {
                 logic::draw_fn(graphics); // TODO: redraw the window in a better place
                 graphics.window.request_redraw();
@@ -157,6 +179,20 @@ impl ApplicationHandler for App {
                 }
             _ => (),
         }
+    }
+
+    fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
+        println!("about to wait loop ran");
+        let Some(graphics) = self.graphics.as_mut() else {
+            eprintln!("could not create graphics in about_to_wait method");
+            return;
+        };
+        if Instant::now() >= graphics.next_tick {
+            logic::draw_fn(graphics);
+            graphics.window.request_redraw();
+            graphics.next_tick = Instant::now() + Duration::from_secs(1); // change the cooldown as u wish
+        }
+        event_loop.set_control_flow(ControlFlow::WaitUntil(graphics.next_tick));
     }
 }
 
