@@ -38,24 +38,22 @@ fn grid_looper(graphics: &mut window::Graphics, paused: bool) {
                 color,
             });
             if !paused {
-                life_logic(graphics, x, y)
+                life_logic(graphics, &prev, x, y)
             }
         })
     });
 }
-fn life_logic(graphics: &mut Graphics, x: usize, y: usize) {
+fn life_logic(graphics: &mut Graphics, prev: &[Vec<bool>], x: usize, y: usize) {
     // mutate like this
     *graphics
         .grid
         .get_mut(y)
         .and_then(|row| row.get_mut(x))
         .expect("grid cant be mutated") =
-        match neighbor_condition(neighbor_count(&mut graphics.grid, x, y), &CONFIG).unwrap_or(Death)
-        {
+        match neighbor_condition(neighbor_count(prev, x, y), &CONFIG).unwrap_or(Death) {
             Birth => true,
             Earth => {
-                if *graphics
-                    .grid
+                if *prev
                     .get(y)
                     .and_then(|row| row.get(x))
                     .expect("grid couldnt be read here")
