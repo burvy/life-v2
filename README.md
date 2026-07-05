@@ -22,3 +22,17 @@ and uses the interface in `window.rs` to display changes to the screen.
 ## `logic.rs`
 `logic.rs` is by far the most interesting file in my code, as it contains the actual cellular automata logic. 
 Lets see it!!
+
+### STRUCTURES
+#### `Behavior` 
+An enum with 3 members: `Birth`, `Earth`, `Death`. 
+
+I chose these names because they all have 5 letters in them.
+`Birth` signals that a cell should be turned on no matter what, 
+
+`Earth` signals a cell should persist if it existed in the last generation,
+
+`Death` signals that a cell should be turned off no matter what.
+
+#### `NeighborBehavior`
+a struct containing an array of 9 `Behavior`s.
