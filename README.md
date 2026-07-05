@@ -10,6 +10,3 @@ Try running the executable in Releases!
 
 Since **pixels** uses a single buffer rather than a grid to read/write pixels, 
 much of the custom pixel drawing interface may be a bit confusing.
-
-This image below details the thought process behind the `draw_pixels_on_grid` method:
-![draw_pixels_on_grid function](docs/images/draw_pixel_batch.jpg)
