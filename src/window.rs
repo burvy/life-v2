@@ -7,7 +7,6 @@ use pixels::{
     wgpu::{Backends, Color},
     Pixels, PixelsBuilder, SurfaceTexture,
 };
-use pollster;
 use winit::{
     application::ApplicationHandler,
     dpi::PhysicalPosition,
