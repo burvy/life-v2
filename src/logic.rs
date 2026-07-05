@@ -2,34 +2,10 @@ use std::ops::Deref;
 
 use super::window;
 
-struct NeighborBehavior {
-    one: Behavior,
-    two: Behavior,
-    three: Behavior,
-    four: Behavior,
-    five: Behavior,
-    six: Behavior,
-    seven: Behavior,
-    eight: Behavior,
-}
-enum Behavior {
-    Birth,
-    Survive,
-    Die,
-}
+struct NeighborBehavior([bool; 8]);
 
-use Behavior::{Birth, Die, Survive};
-
-const CONFIG: NeighborBehavior = NeighborBehavior {
-    one: Die,
-    two: Survive,
-    three: Birth,
-    four: Die,
-    five: Die,
-    six: Die,
-    seven: Die,
-    eight: Die,
-};
+const CONFIG: NeighborBehavior =
+    NeighborBehavior([false, true, true, false, false, false, false, false]);
 
 /// this function is called to draw graphics in the window
 pub fn draw_fn(graphics: &mut window::Graphics) {
@@ -58,7 +34,7 @@ fn grid_looper(graphics: &mut window::Graphics) {
                         .get_mut(y)
                         .and_then(|row| row.get_mut(x))
                         .expect("grid cant be mutated") =
-                        neighbor_condition(neighbor_count(graphics, x, y), CONFIG);
+                        neighbor_condition(neighbor_count(graphics, x, y), CONFIG).unwrap_or(false);
                 } else {
                     graphics.draw_pixel_on_grid(window::PixelInfo {
                         x: x * graphics.scale,
@@ -71,12 +47,12 @@ fn grid_looper(graphics: &mut window::Graphics) {
 }
 
 /// checks input neighbor count and tells you if this cell should be alive
-fn neighbor_condition(count: u8, config: NeighborBehavior) -> bool {
-    todo!()
+fn neighbor_condition(count: usize, config: NeighborBehavior) -> Option<bool> {
+    Some(config.0[count])
 }
 
 /// checks nearby neighbors and returns neighbor count
-fn neighbor_count(graphics: &window::Graphics, x: usize, y: usize) -> u8 {
+fn neighbor_count(graphics: &window::Graphics, x: usize, y: usize) -> usize {
     (0..3)
         .flat_map(|i| (0..3).map(move |j| (i, j))) // allows ownership of both i and j now
         .map(|(i, j)| {
@@ -87,9 +63,9 @@ fn neighbor_count(graphics: &window::Graphics, x: usize, y: usize) -> u8 {
                 .copied()
                 .unwrap_or(false)
             {
-                1_u8
+                1
             } else {
-                0_u8
+                0
             }
         })
         .sum()
