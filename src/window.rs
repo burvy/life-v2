@@ -186,6 +186,7 @@ impl ApplicationHandler for App {
         }
     }
 
+    /// this just so happens to be perfect for making an update loop
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
         println!("about to wait loop ran");
         let Some(graphics) = self.graphics.as_mut() else {
