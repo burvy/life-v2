@@ -12,7 +12,7 @@ use winit::{
     dpi::PhysicalPosition,
     event::{ElementState::Pressed, MouseScrollDelta, WindowEvent},
     event_loop::{ActiveEventLoop, ControlFlow},
-    keyboard::KeyCode::Space,
+    keyboard::KeyCode::{KeyQ, Space},
     window::{Fullscreen, Window, WindowId},
 };
 
@@ -160,7 +160,8 @@ impl ApplicationHandler for App {
                     MouseScrollDelta::LineDelta(_, y) => y as f64,
                     MouseScrollDelta::PixelDelta(PhysicalPosition { y, .. }) => y / 20.0,
                 };
-                self.speed = (self.speed as f64 - y * 20.0).min(1.0).max(200.0) as u64;
+                self.speed = (self.speed as f64 - y * 1.0) as u64;
+                println!("speed set to: {}", self.speed); // TODO: remove debug later
             }
             WindowEvent::CloseRequested => {
                 event_loop.exit();
@@ -197,6 +198,10 @@ impl ApplicationHandler for App {
             WindowEvent::KeyboardInput { event, .. } => {
                 if event.state == Pressed && !event.repeat && event.physical_key == Space {
                     self.paused = !self.paused;
+                }
+                // TODO: remove debug eventually
+                if event.state == Pressed && !event.repeat && event.physical_key == KeyQ {
+                    println!("Q pressed, speed is: {}", self.speed);
                 }
                 logic::draw_fn(graphics, self.paused); // TODO: redraw the window in a better place
                 graphics.window.request_redraw();
