@@ -1,19 +1,16 @@
-use std::{
-    sync::Arc,
-    time::{Duration, Instant},
-};
-
 use pixels::{
     wgpu::{Backends, Color},
     Pixels, PixelsBuilder, SurfaceTexture,
 };
+use std::{sync::Arc, time::Duration};
+use web_time::Instant;
 use winit::{
     application::ApplicationHandler,
     dpi::PhysicalPosition,
     event::{ElementState::Pressed, MouseScrollDelta, WindowEvent},
-    event_loop::{ActiveEventLoop, ControlFlow},
+    event_loop::{ActiveEventLoop, ControlFlow, EventLoopProxy},
     keyboard::KeyCode::{KeyQ, Space},
-    window::{Fullscreen, Window, WindowId},
+    window::{Window, WindowId},
 };
 
 use super::logic;
@@ -50,7 +47,7 @@ pub struct Graphics {
     /// thats self explanatory
     /// if now is more than this time then update this time and run your logic
     /// TODO: find a stable way to do a loop
-    pub next_tick: std::time::Instant,
+    pub next_tick: Instant,
 
     /// stores the last known position of the cursor
     /// it only updates on move
@@ -70,30 +67,59 @@ pub struct App {
 
     pub paused: bool,
 
-    pub speed: u64,
+    pub speed: u32,
+    pub proxy: Option<EventLoopProxy<Graphics>>,
+    pub canvas_parent: Option<String>,
 }
 
-impl ApplicationHandler for App {
+impl ApplicationHandler<Graphics> for App {
     /// create a new window if there is no window already
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        if self.graphics.is_none() {
-            let window_attributes = Window::default_attributes()
-                .with_title("Cellular Automata") // this is probably how its spelled
-                // no transparency bc it might crash
-                .with_fullscreen(Some(Fullscreen::Borderless(None)));
-            // window is an arc which makes things so much better
-            let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
+        if self.graphics.is_some() {
+            return;
+        }
+        let window_attributes = Window::default_attributes().with_title("Cellular Automata");
+        // fullscreen is meaningless (and errors) inside a page canvas
+        #[cfg(not(target_arch = "wasm32"))]
+        let window_attributes = window_attributes.with_fullscreen(Some(Fullscreen::Borderless(None)));
+        // window is an arc which makes things so much better
+        let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
+
+        // winit makes a <canvas> but doesn't attach it; drop it into the page.
+        // #life-canvas if the Leptos route provides it, else <body>.
+        #[cfg(target_arch = "wasm32")]
+        {
+            use winit::platform::web::WindowExtWebSys;
+            let canvas = window.canvas().expect("winit gave no canvas");
+            // winit's canvas is 0x0 until sized; winit reads these back as inner_size
+            canvas.set_width(800);
+            canvas.set_height(600);
+            let doc = web_sys::window().unwrap().document().unwrap();
+            let parent = doc
+                .get_element_by_id(
+                    self.canvas_parent
+                        .as_ref()
+                        .expect("couldn't find parent")
+                )
+                .unwrap_or_else(|| doc.body().unwrap().into());
+            parent.append_child(&canvas).unwrap();
+        }
+
+        // build_async can't block the main thread on web, so build off-thread
+        // and hand the result back via the proxy instead of assigning here.
+        let proxy = self.proxy.clone().expect("proxy not set before resumed");
+        let paused = self.paused;
+        let build = async move {
             let size = window.inner_size();
-            println!("created pixels with size {}x{}", size.width, size.height);
-            // so we can solve borrow checker issues by just cloning window earlier
-            let surface_texture = SurfaceTexture::new(size.width, size.height, window.clone());
-            // no pollster!!!
-            let pixels = PixelsBuilder::new(size.width, size.height, surface_texture)
-                .wgpu_backend(Backends::GL) // maybe use vulkan too if u can
-                .build()
+            // canvas can be 0x0 before layout; wgpu rejects a zero surface
+            let (w, h) = (size.width.max(1), size.height.max(1));
+            let surface_texture = SurfaceTexture::new(w, h, window.clone());
+            let pixels = PixelsBuilder::new(w, h, surface_texture)
+                    .wgpu_backend(Backends::GL) // maybe use vulkan too if u can
+                .build_async()
+                .await
                 .expect("some error while making pxels");
-            // TODO: move this somewhere more accessible
-            self.graphics = Some(Graphics {
+            let mut graphics = Graphics {
                 window,
                 pixels,
                 bg_clr: [0.0, 0.0, 0.0],
@@ -101,34 +127,33 @@ impl ApplicationHandler for App {
                 grid: vec![],
                 next_tick: Instant::now(),
                 cursor_pos: PhysicalPosition { x: 0.0, y: 0.0 },
-            });
-            // TODO: use this to draw pixels!
-            let graphics = self.graphics.as_mut().expect("could not create graphics");
-
-            // initialize the grid
+            };
             let (size_x, size_y) = (
                 graphics.pixels.texture().size().width as usize,
                 graphics.pixels.texture().size().height as usize,
             );
             graphics.grid = vec![vec![false; size_x / graphics.scale]; size_y / graphics.scale];
-            // draw graphics now
-            logic::draw_fn(graphics, self.paused);
+            logic::draw_fn(&mut graphics, paused);
+            graphics.pixels.render().expect("initial render failed");
+            graphics.window.request_redraw();
+            let _ = proxy.send_event(graphics);
+        };
 
-            // try rendering immediately
-            self.graphics
-                .as_mut()
-                .unwrap()
-                .pixels
-                .render()
-                .expect("initial render failed");
-            self.graphics.as_ref().unwrap().window.request_redraw();
-        }
+        #[cfg(target_arch = "wasm32")]
+        wasm_bindgen_futures::spawn_local(build);
+        #[cfg(not(target_arch = "wasm32"))]
+        pollster::block_on(build);
+    }
+
+    /// the async build in `resumed` delivers the ready `Graphics` here
+    fn user_event(&mut self, _event_loop: &ActiveEventLoop, graphics: Graphics) {
+        self.graphics = Some(graphics);
     }
     /// detect events and run actions on them if you want
     fn window_event(
         &mut self,
         event_loop: &ActiveEventLoop,
-        window_id: WindowId, // why do i even need window id what is this for
+        _window_id: WindowId, // why do i even need window id what is this for
         event: WindowEvent,
     ) {
         if let WindowEvent::Resized(size) = &event {
@@ -160,7 +185,7 @@ impl ApplicationHandler for App {
                     MouseScrollDelta::LineDelta(_, y) => y as f64,
                     MouseScrollDelta::PixelDelta(PhysicalPosition { y, .. }) => y / 20.0,
                 };
-                self.speed = (self.speed as f64 - y * 1.0) as u64;
+                self.speed = (self.speed as f64 - y * 1.0) as u32;
                 println!("speed set to: {}", self.speed); // TODO: remove debug later
             }
             WindowEvent::CloseRequested => {
@@ -237,7 +262,7 @@ impl ApplicationHandler for App {
         if Instant::now() >= graphics.next_tick {
             logic::draw_fn(graphics, self.paused);
             graphics.window.request_redraw();
-            graphics.next_tick = Instant::now() + Duration::from_millis(self.speed);
+            graphics.next_tick = Instant::now() + Duration::from_millis(self.speed as u64);
             // change the cooldown as u wish
         }
         event_loop.set_control_flow(ControlFlow::WaitUntil(graphics.next_tick));
