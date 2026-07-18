@@ -91,6 +91,7 @@ impl ApplicationHandler<Graphics> for App {
             // winit's canvas is 0x0 until sized; winit reads these back as inner_size
             canvas.set_width(800);
             canvas.set_height(600);
+            canvas.set_tab_index(0);
             let doc = web_sys::window().unwrap().document().unwrap();
             let parent = doc
                 .get_element_by_id(
@@ -100,6 +101,7 @@ impl ApplicationHandler<Graphics> for App {
                 )
                 .unwrap_or_else(|| doc.body().unwrap().into());
             parent.append_child(&canvas).unwrap();
+            let _ = canvas.focus();
         }
 
         // build_async can't block the main thread on web, so build off-thread
