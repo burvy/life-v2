@@ -1,0 +1,19 @@
+{
+  "lsp": {
+    "rust-analyzer": {
+      "initialization_options": {
+        "procMacro": {
+          "ignored": {},
+          "enable": true,
+        },
+        "cargo": {
+          "target": "wasm32-unknown-unknown" // wasm32-unknown-unknown
+        },
+        "check": {
+          "targets": ["wasm32-unknown-unknown"]
+        },
+        "cfgs": ["web_sys_unstable_apis"],
+      },
+    },
+  },
+}
