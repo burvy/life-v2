@@ -79,9 +79,6 @@ impl ApplicationHandler<Graphics> for App {
             return;
         }
         let window_attributes = Window::default_attributes().with_title("Cellular Automata");
-        // fullscreen is meaningless (and errors) inside a page canvas
-        #[cfg(not(target_arch = "wasm32"))]
-        let window_attributes = window_attributes.with_fullscreen(Some(Fullscreen::Borderless(None)));
         // window is an arc which makes things so much better
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
 
